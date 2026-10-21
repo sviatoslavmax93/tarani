@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Три тарані</title>
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-512.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Три тарані">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#14532d">
+<style>
+  html, body { margin: 0; height: 100%; background: #14532d; }
+  body { display: flex; flex-direction: column; font-family: system-ui, -apple-system, sans-serif; }
+  #top { height: env(safe-area-inset-top); background: #14532d; flex: none; }
+  #bottom { height: env(safe-area-inset-bottom); background: #fff; flex: none; }
+  iframe { flex: 1; width: 100%; border: 0; background: #f4f6f4; }
+  #msg { margin: 24px; padding: 16px; background: #fff; border-radius: 12px; color: #111; }
+</style>
+</head>
+<body>
+<div id="top"></div>
+<iframe id="app" title="АФК «Три тарані»" allow="clipboard-write"></iframe>
+<div id="bottom"></div>
+<script>
+  // Посилання на застосунок (закінчується на /exec)
+  var EXEC_URL = 'https://script.google.com/macros/s/AKfycbxoGGCTXgSRJ33S9NRZ5L9JJQWNL-4tAXLnHh2zDRswPU90ANRFsy92PlxUO1Maybw/exec';
+  var f = document.getElementById('app');
+  if (/^https:\/\/script\.google\.com\/\S+$/.test(EXEC_URL) || /^file:/.test(EXEC_URL)) f.src = EXEC_URL;
+  else { f.remove(); document.body.insertAdjacentHTML('afterbegin', '<div id="msg">Відкрийте файл index.html і вставте в EXEC_URL посилання на застосунок (https://script.google.com/macros/s/…/exec).</div>'); }
+</script>
+</body>
+</html>
