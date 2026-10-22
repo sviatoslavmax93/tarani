@@ -21,13 +21,29 @@
 </style>
 </head>
 <body>
-<iframe id="app" title="АФК «Три тарані»" allow="clipboard-write"></iframe>
+<iframe id="app" title="АФК «Три тарані»" allow="clipboard-write; web-share"></iframe>
 <script>
   // Посилання на застосунок (закінчується на /exec)
   var EXEC_URL = 'https://script.google.com/macros/s/AKfycbxoGGCTXgSRJ33S9NRZ5L9JJQWNL-4tAXLnHh2zDRswPU90ANRFsy92PlxUO1Maybw/exec';
   var f = document.getElementById('app');
   if (/^https:\/\/script\.google\.com\/\S+$/.test(EXEC_URL) || /^file:/.test(EXEC_URL)) f.src = EXEC_URL;
   else { f.remove(); document.body.insertAdjacentHTML('afterbegin', '<div id="msg">Відкрийте файл index.html і вставте в EXEC_URL посилання на застосунок (https://script.google.com/macros/s/…/exec).</div>'); }
+  var lastReload = 0;
+  // застосунок може попросити перезавантажити себе, якщо сесія Google після сну телефона протухла
+  window.addEventListener('message', function (e) {
+    var d = e.data; if (!d) return;
+    if (d.afk === 'reload') {
+      if (Date.now() - lastReload < 30000 || !f.parentNode) return;
+      lastReload = Date.now(); f.src = 'about:blank'; setTimeout(function () { f.src = EXEC_URL; }, 80);
+    }
+    // «Поділитися»: системне меню iOS відкриваємо звідси, бо у вкладеному вікні Google воно заблоковане
+    if (d.afk === 'share' && typeof d.text === 'string') {
+      var reply = function (m) { try { e.source.postMessage(m, '*'); } catch (x) { } };
+      if (!navigator.share) { reply({ afk: 'share-fail' }); return; }
+      reply({ afk: 'share-ack' });
+      navigator.share({ text: d.text.slice(0, 5000) }).catch(function (err) { if (!err || err.name !== 'AbortError') reply({ afk: 'share-fail' }); });
+    }
+  });
 </script>
 </body>
 </html>
