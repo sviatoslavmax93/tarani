@@ -12,19 +12,38 @@
 <meta name="apple-mobile-web-app-title" content="Три тарані">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#ffffff">
-<script>
-  // Звичайне відкриття (ярлик): одразу переходимо на застосунок, сторінка не встигає з'явитись.
-  // Налаштування ярлика: відкрийте цю сторінку з «?add» в кінці — вона НЕ перенаправляє, і ви можете додати її на початковий екран.
-  if (location.search.indexOf('add') < 0) location.replace("https://script.google.com/macros/s/AKfycbxoGGCTXgSRJ33S9NRZ5L9JJQWNL-4tAXLnHh2zDRswPU90ANRFsy92PlxUO1Maybw/exec");
-</script>
-<style>html,body{margin:0;height:100%;background:#fff}</style>
+<style>
+  html, body { margin: 0; height: 100%; background: #fff; overflow: hidden; }
+  /* екран ділиться з системою: зверху біла смуга статусу, знизу біле тло — як у звичайному Safari */
+  /* знизу залишаємо трохи білого місця під іконками меню: змініть 14px, щоб додати або зменшити */
+  iframe { position: fixed; top: 0; left: 0; width: 100%; height: calc(100% - 14px); border: 0; background: #f4f6f4; }
+  #msg { margin: 24px; padding: 16px; background: #fff; border-radius: 12px; color: #111; font-family: system-ui, -apple-system, sans-serif; }
+</style>
 </head>
 <body>
-<div style="font:16px/1.45 system-ui,-apple-system,sans-serif;color:#15231b;padding:28px 22px">
-<img src="apple-touch-icon.png" width="86" height="86" style="border-radius:20px;display:block;margin:0 0 14px" alt="">
-<b style="font-size:19px">АФК «Три тарані»</b>
-<p>Щоб додати ярлик: торкніться «Поділитися» → «На початковий екран» → «Додати». Далі ярлик відкриватиме застосунок одразу.</p>
-</div>
-<script>try { history.replaceState(null, '', location.pathname); } catch (e) { }</script>
+<iframe id="app" title="АФК «Три тарані»" allow="clipboard-write; web-share"></iframe>
+<script>
+  // Посилання на застосунок (закінчується на /exec)
+  var EXEC_URL = 'https://script.google.com/macros/s/AKfycbxoGGCTXgSRJ33S9NRZ5L9JJQWNL-4tAXLnHh2zDRswPU90ANRFsy92PlxUO1Maybw/exec';
+  var f = document.getElementById('app');
+  if (/^https:\/\/script\.google\.com\/\S+$/.test(EXEC_URL) || /^file:/.test(EXEC_URL)) f.src = EXEC_URL;
+  else { f.remove(); document.body.insertAdjacentHTML('afterbegin', '<div id="msg">Відкрийте файл index.html і вставте в EXEC_URL посилання на застосунок (https://script.google.com/macros/s/…/exec).</div>'); }
+  var lastReload = 0;
+  // застосунок може попросити перезавантажити себе, якщо сесія Google після сну телефона протухла
+  window.addEventListener('message', function (e) {
+    var d = e.data; if (!d) return;
+    if (d.afk === 'reload') {
+      if (Date.now() - lastReload < 30000 || !f.parentNode) return;
+      lastReload = Date.now(); f.src = 'about:blank'; setTimeout(function () { f.src = EXEC_URL; }, 80);
+    }
+    // «Поділитися»: системне меню iOS відкриваємо звідси, бо у вкладеному вікні Google воно заблоковане
+    if (d.afk === 'share' && typeof d.text === 'string') {
+      var reply = function (m) { try { e.source.postMessage(m, '*'); } catch (x) { } };
+      if (!navigator.share) { reply({ afk: 'share-fail' }); return; }
+      reply({ afk: 'share-ack' });
+      navigator.share({ text: d.text.slice(0, 5000) }).catch(function (err) { if (!err || err.name !== 'AbortError') reply({ afk: 'share-fail' }); });
+    }
+  });
+</script>
 </body>
 </html>
