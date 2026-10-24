@@ -7,6 +7,18 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" href="icon-512.png">
 <link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-startup-image" href="splash/s-1320x2868.png" media="(device-width: 440px) and (device-height: 956px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+<link rel="apple-touch-startup-image" href="splash/s-1206x2622.png" media="(device-width: 402px) and (device-height: 874px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+<link rel="apple-touch-startup-image" href="splash/s-1290x2796.png" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+<link rel="apple-touch-startup-image" href="splash/s-1179x2556.png" media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+<link rel="apple-touch-startup-image" href="splash/s-1284x2778.png" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+<link rel="apple-touch-startup-image" href="splash/s-1170x2532.png" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+<link rel="apple-touch-startup-image" href="splash/s-1125x2436.png" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+<link rel="apple-touch-startup-image" href="splash/s-1242x2688.png" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+<link rel="apple-touch-startup-image" href="splash/s-828x1792.png" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
+<link rel="apple-touch-startup-image" href="splash/s-750x1334.png" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
+<link rel="apple-touch-startup-image" href="splash/s-1260x2736.png" media="(device-width: 420px) and (device-height: 912px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+<link rel="apple-touch-startup-image" href="splash/s-1242x2208.png" media="(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Три тарані">
@@ -16,11 +28,18 @@
   html, body { margin: 0; height: 100%; background: #fff; overflow: hidden; }
   /* екран ділиться з системою: зверху біла смуга статусу, знизу біле тло — як у звичайному Safari */
   /* знизу залишаємо трохи білого місця під іконками меню: змініть 14px, щоб додати або зменшити */
-  iframe { position: fixed; top: 0; left: 0; width: 100%; height: calc(100% - 14px); border: 0; background: #f4f6f4; }
+  iframe { position: fixed; top: 0; left: 0; width: 100%; height: calc(100% - 14px); border: 0; background: #f4f6f4; opacity: 0; transition: opacity .15s ease; }
+  iframe.on { opacity: 1; }
+  /* заставка з логотипом: видно, поки застосунок завантажується */
+  #splash { position: fixed; inset: 0; display: grid; place-items: center; background: #fff; transition: opacity .15s ease; }
+  #splash img { width: 30vmin; max-width: 160px; min-width: 96px; height: auto; border-radius: 22%; animation: pulse 1.4s ease-in-out infinite; }
+  #splash.off { opacity: 0; pointer-events: none; }
+  @keyframes pulse { 0%,100% { transform: scale(1); opacity: 1; } 50% { transform: scale(.94); opacity: .8; } }
   #msg { margin: 24px; padding: 16px; background: #fff; border-radius: 12px; color: #111; font-family: system-ui, -apple-system, sans-serif; }
 </style>
 </head>
 <body>
+<div id="splash"><img src="icon-512.png" alt=""></div>
 <iframe id="app" title="АФК «Три тарані»" allow="clipboard-write; web-share"></iframe>
 <script>
   // Посилання на застосунок (закінчується на /exec)
@@ -28,13 +47,18 @@
   var f = document.getElementById('app');
   if (/^https:\/\/script\.google\.com\/\S+$/.test(EXEC_URL) || /^file:/.test(EXEC_URL)) f.src = EXEC_URL;
   else { f.remove(); document.body.insertAdjacentHTML('afterbegin', '<div id="msg">Відкрийте файл index.html і вставте в EXEC_URL посилання на застосунок (https://script.google.com/macros/s/…/exec).</div>'); }
+  // показуємо застосунок, коли він сам повідомив «готово» (або через 7 секунд про всяк випадок)
+  var shown = false;
+  function showApp() { if (shown) return; shown = true; f.classList.add('on'); var s = document.getElementById('splash'); if (s) { s.classList.add('off'); setTimeout(function () { s.remove(); }, 250); } }
+  setTimeout(showApp, 7000);
   var lastReload = 0;
   // застосунок може попросити перезавантажити себе, якщо сесія Google після сну телефона протухла
   window.addEventListener('message', function (e) {
     var d = e.data; if (!d) return;
+    if (d.afk === 'ready') { showApp(); return; }
     if (d.afk === 'reload') {
       if (Date.now() - lastReload < 30000 || !f.parentNode) return;
-      lastReload = Date.now(); f.src = 'about:blank'; setTimeout(function () { f.src = EXEC_URL; }, 80);
+      lastReload = Date.now(); shown = false; f.classList.remove('on'); setTimeout(showApp, 7000); f.src = 'about:blank'; setTimeout(function () { f.src = EXEC_URL; }, 80);
     }
     // «Поділитися»: системне меню iOS відкриваємо звідси, бо у вкладеному вікні Google воно заблоковане
     if (d.afk === 'share' && typeof d.text === 'string') {
